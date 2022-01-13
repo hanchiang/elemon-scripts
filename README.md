@@ -6,8 +6,8 @@ This project has 2 features:
 
 
 # Demo of 1
-<iframe src="https://giphy.com/embed/IgNCuiZpUJdfrsi7TZ" width="480" height="248" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/IgNCuiZpUJdfrsi7TZ">via GIPHY</a></p>
+[![Watch the video](https://media.giphy.com/media/IgNCuiZpUJdfrsi7TZ/giphy.gif)](https://media.giphy.com/media/IgNCuiZpUJdfrsi7TZ/giphy.gif)
 
 
 # Demo of 2
-<iframe src="https://giphy.com/embed/VITjZW1NTc9k2Ndexq" width="480" height="248" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/VITjZW1NTc9k2Ndexq">via GIPHY</a></p>
+[![Watch the video](https://media.giphy.com/media/VITjZW1NTc9k2Ndexq/giphy.gif)](https://media.giphy.com/media/VITjZW1NTc9k2Ndexq/giphy.gif)
