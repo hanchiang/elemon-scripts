@@ -17,14 +17,16 @@
     "test": "jest --forceExit --coverage --verbose"
   },
   "dependencies": {
-    "@truffle/hdwallet-provider": "^1.6.0",
+    "axios": "^0.24.0",
     "dotenv": "8.2.0",
+    "ethers": "^5.5.1",
     "lodash": "^4.17.21",
     "nodemailer": "6.4.17",
     "web3": "^1.6.0",
     "winston": "3.3.3"
   },
   "devDependencies": {
+    "@truffle/hdwallet-provider": "^1.6.0",
     "@types/concurrently": "5.2.1",
     "@types/errorhandler": "1.5.0",
     "@types/eslint": "7.2.6",
@@ -40,8 +42,9 @@
     "@typescript-eslint/eslint-plugin": "4.14.2",
     "@typescript-eslint/parser": "4.14.2",
     "concurrently": "6.0.2",
-    "eslint": "7.19.0",
+    "eslint": "7.28.0",
     "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "jest": "^27.0.6",
     "nodemon": "^2.0.7",
     "prettier": "2.4.1",
