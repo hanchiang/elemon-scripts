@@ -1,7 +1,7 @@
 # Introduction
 This project has 2 features:
-1. Determine the best individual elements and strengths and weaknesses of a team composition
-2. Displays a list of the cheapest listings(based on BUSD/power rating) for a given hero and rarity
+1. `src/index.ts`: Determine the best individual elements and strengths and weaknesses of a team composition
+2. `src/marketplace-adhoc.ts`: Displays a list of the cheapest listings(based on BUSD/power rating) for a given hero and rarity
 
 
 
