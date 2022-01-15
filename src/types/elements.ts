@@ -18,8 +18,8 @@ export type Element =
   | "steel"
   | "fairy";
 
-export type ProcessElementsAttackDefenseStrengthOperator = "+" | "-"
-export type SortOrder = "ascending" | "descending"
+export type ProcessElementsAttackDefenseStrengthOperator = "+" | "-";
+export type SortOrder = "ascending" | "descending";
 
 export interface ElementsStrengthWeaknessCount {
   element: Element;

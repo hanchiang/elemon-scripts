@@ -16,29 +16,30 @@ import axios from "axios";
  * Most important stats: powerRating, lastPrice, costPerPowerRating
  */
 
-const baseCardStringToId = {
+const baseCardStringToId: Record<string, number> = {
   legolas: 11,
   scary: 19,
   ties: 21,
   kuroo: 22,
 };
 
-const heroRarityStringToid = {
+const heroRarityStringToId: Record<string, number> = {
   A: 2,
   S: 3,
 };
 
-const bodyPartIdToString = {
+const bodyPartQualityIdToString: Record<number, string> = {
   4: "rare",
   5: "epic 1",
   6: "epic 2",
   7: "legend 1",
   8: "legend 2",
+  9: "Mythical",
 };
 
 // TODO: get cookie by visiting any page from elemon website
 const cookie =
-  "_ga=GA1.1.1462171630.1641993109; cf_clearance=BI2FaEMcJxCz5zj15qso6iTlZ83kspM9Nn6enK6nPqk-1642075673-0-150; cf_ob_info=502:6cce9bcf1b056c09:SIN; cf_use_ob=0; _ga_LMWK02S9ZZ=GS1.1.1642073699.10.1.1642076755.0";
+  "_ga=GA1.1.1462171630.1641993109; cf_clearance=LNuqb2Gp20JgHMxQJjwVT.RHQCqN5r3xO1UDyR8V8pw-1642150040-0-150; _ga_LMWK02S9ZZ=GS1.1.1642150040.16.1.1642150043.0";
 const referer = "https://app.elemon.io/market";
 const userAgent =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36";
@@ -62,51 +63,9 @@ const rarityMap: Record<number, string> = {
 };
 
 const start = async () => {
-  let pageNumber = 1;
-  const pageSize = 50;
+  let result = [];
 
-  const result = [];
-
-  // Get elemons in market
-  /**
-   * response: {
-   *  data: [{
-   *     tokenId,
-   *     lastPrice,
-   *     ownerAddress,
-   *     rarity,
-   *     purity,
-   *     class,
-   *     quality
-   *   }],
-   *  paging: {
-   *    page, pageSize, totalCount
-   *  }
-   * }
-   */
-
-  const elemonsData = [];
-  let hasMoreItems = true;
-  while (hasMoreItems) {
-    console.log(
-      `--- GETTING ELEMONS MARKET DATA PAGE ${pageNumber}, PAGE SIZE ${pageSize} ---`
-    );
-    const elemonsResponse = await axios.get(
-      `https://app.elemon.io/market/getElemonItems?pageNumber=${pageNumber}&pageSize=${pageSize}&positionType=2&priceMode=&baseCardId=${baseCardStringToId.legolas}&tokenId=&rarities=${heroRarityStringToid.S}&classes=&purities=&address=`,
-      {
-        withCredentials: true,
-        headers: header,
-      }
-    );
-
-    elemonsData.push(...elemonsResponse.data.data);
-
-    const { paging } = elemonsResponse.data;
-    hasMoreItems = paging.totalCount > paging.page * paging.pageSize;
-    await sleep();
-    pageNumber++;
-  }
-
+  const elemonsData = await getElemonsData();
   // Get elemon info
   for (const r of elemonsData) {
     const {
@@ -119,36 +78,9 @@ const start = async () => {
       quality: auraQuality,
     } = r;
 
-    /**
-     * response: {
-     *    data: [{
-     *      level,
-     *      point,
-     *      star,
-     *      bodyPart: [{
-     *          type, quality, ability, val
-     *      }],
-     *      skills: [{
-     *        skillImg, level, skillId
-     *      }]
-     *    }]
-     * }
-     */
-    console.log(`--- GETTING ELEMON DATA FOR ID ${elemonId} ---`);
-    const elemonsResponse = await axios.get(
-      `https://app.elemon.io/elemon/getElemonInfo?tokenId=${elemonId}`,
-      {
-        withCredentials: true,
-        headers: header,
-      }
+    const { level, point, star, bodyPart, skills } = await getElemonInfo(
+      elemonId
     );
-
-    if (!elemonsResponse.data.data?.[0]) {
-      console.log(`Invalid data found`, { data: elemonsResponse.data.data });
-      continue;
-    }
-    const { level, point, star, bodyPart, skills, points } =
-      elemonsResponse.data.data?.[0];
     result.push({
       elemonId,
       baseCardId,
@@ -161,23 +93,119 @@ const start = async () => {
       powerRating: point,
       costPerPowerRating: lastPrice / Math.pow(10, 18) / point,
       star,
-      bodyPart,
+      bodyPart: bodyPart.map((b: any) => ({
+        ...b,
+        quality: bodyPartQualityIdToString[b.quality] || b.quality,
+      })),
       skills,
-      stats: points,
+      // stats: points,
     });
     await sleep();
   }
 
   console.log(`--- COMPLETED RETRIEVING ALL DATA ---`);
 
+  result = filterResults(result);
   result.sort((a, b) => a.costPerPowerRating - b.costPerPowerRating);
 
-  console.log(result.slice(0, 20));
+  const cheapestListings = result.slice(0, 10);
+  console.log("--- CHEAPEST LISTINGS ---");
+  console.log(JSON.stringify(cheapestListings, undefined, 2));
+
+  const mostExpensiveListings = result.slice(result.length - 10);
+  console.log("--- MOST EXPENSIVE LISTINGS ---");
+  console.log(JSON.stringify(mostExpensiveListings, undefined, 2));
+};
+
+const filterResults = (result: any[]) => {
+  return result.filter((r) => r.aura === "orange" || r.aura === "red");
+};
+
+/**
+ * Get elemons in market
+ * response: {
+ *  data: [{
+ *     tokenId,
+ *     lastPrice,
+ *     ownerAddress,
+ *     rarity,
+ *     purity,
+ *     class,
+ *     quality
+ *   }],
+ *  paging: {
+ *    page, pageSize, totalCount
+ *  }
+ * }
+ */
+const getElemonsData = async () => {
+  let pageNumber = 1;
+  const pageSize = 50;
+  const elemonsData = [];
+  let hasMoreItems = true;
+
+  while (hasMoreItems) {
+    console.log(
+      `--- GETTING ELEMONS MARKET DATA PAGE ${pageNumber}, PAGE SIZE ${pageSize} ---`
+    );
+    const elemonsResponse = await axios.get(
+      `https://app.elemon.io/market/getElemonItems?pageNumber=${pageNumber}&pageSize=${pageSize}&positionType=2&priceMode=&baseCardId=${baseCardStringToId.legolas}&tokenId=&rarities=${heroRarityStringToId.S}&classes=&purities=&address=`,
+      {
+        withCredentials: true,
+        headers: header,
+      }
+    );
+
+    elemonsData.push(...elemonsResponse.data.data);
+
+    const { paging } = elemonsResponse.data;
+    console.log(`TOTAL COUNT: ${paging.totalCount}`);
+    hasMoreItems = paging.totalCount > paging.page * paging.pageSize;
+    await sleep();
+    pageNumber++;
+  }
+
+  return elemonsData;
+};
+
+/**
+ * response: {
+ *    data: [{
+ *      level,
+ *      point,
+ *      star,
+ *      bodyPart: [{
+ *          type, quality, ability, val
+ *      }],
+ *      skills: [{
+ *        skillImg, level, skillId
+ *      }]
+ *    }]
+ * }
+ */
+const getElemonInfo = async (elemonId: number) => {
+  console.log(`--- GETTING ELEMON DATA FOR ID ${elemonId} ---`);
+  const elemonsResponse = await axios.get(
+    `https://app.elemon.io/elemon/getElemonInfo?tokenId=${elemonId}`,
+    {
+      withCredentials: true,
+      headers: header,
+    }
+  );
+
+  if (!elemonsResponse.data.data?.[0]) {
+    console.log(`Invalid data found`, { data: elemonsResponse.data.data });
+    return null;
+  }
+  const { level, point, star, bodyPart, skills, points } =
+    elemonsResponse.data.data?.[0];
+
+  return { level, point, star, bodyPart, skills, points };
 };
 
 const sleep = (ms?: number) => {
   if (!ms) {
-    ms = 100 + Math.random() * 500;
+    ms = 200 + Math.random() * 1000;
   }
   console.log(`Sleeping for ${ms / 1000} seconds`);
   return new Promise((resolve) => setTimeout(resolve, ms));
